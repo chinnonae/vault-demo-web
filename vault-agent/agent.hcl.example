@@ -1,0 +1,53 @@
+# Vault Agent configuration example for local Docker Compose usage.
+#
+# Copy this file to vault-agent/agent.hcl and adjust as needed.
+# In production (OpenShift), the Vault Agent sidecar is configured
+# via pod annotations – see openshift/deployment.yaml for details.
+
+vault {
+  address = "http://vault:8200"
+}
+
+# Auto-auth: use a token file for local dev.
+# In OpenShift you would use the Kubernetes auth method instead:
+#
+#   auto_auth {
+#     method "kubernetes" {
+#       mount_path = "auth/kubernetes"
+#       config = {
+#         role = "vault-demo-web"
+#       }
+#     }
+#   }
+
+auto_auth {
+  method "token_file" {
+    config = {
+      token_file_path = "/vault/config/.vault-token"
+    }
+  }
+}
+
+# Write a token to a sink so it can be used by other tools if needed
+sink "file" {
+  config = {
+    path = "/vault/secrets/.token"
+    mode = 0600
+  }
+}
+
+# Template rendering:
+# Each template block renders one or more secrets to a file.
+# The file is kept up to date as secrets are rotated in Vault.
+
+template {
+  source      = "/vault/config/db-creds.tpl"
+  destination = "/vault/secrets/db-creds"
+  perms       = 0640
+}
+
+template {
+  source      = "/vault/config/app-config.tpl"
+  destination = "/vault/secrets/app-config.json"
+  perms       = 0640
+}

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HashiCorp Vault Demo</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <img src="https://www.datocms-assets.com/2885/1620155439-favicon.png"
+           alt="Vault logo" class="logo" onerror="this.style.display='none'" />
+      <h1>HashiCorp Vault Demo</h1>
+      <span class="header-sub">Secrets delivered by Vault Agent / Vault Secrets Operator</span>
+    </div>
+  </header>
+
+  <main>
+    <!-- ── Status bar ─────────────────────────────────────────────── -->
+    <section class="card" id="status-section">
+      <h2>Status</h2>
+      <div class="status-grid">
+        <div class="status-item">
+          <span class="label">App</span>
+          <span id="app-status" class="badge badge-unknown">checking…</span>
+        </div>
+        <div class="status-item">
+          <span class="label">Secrets source</span>
+          <span id="secrets-source-badge">–</span>
+        </div>
+        <div class="status-item">
+          <span class="label">Secrets found</span>
+          <span id="secrets-count">–</span>
+        </div>
+      </div>
+      <button class="btn btn-secondary" onclick="refresh()">↻ Refresh</button>
+    </section>
+
+    <!-- ── Active configuration ───────────────────────────────────── -->
+    <section class="card" id="config-section">
+      <h2>Active Configuration</h2>
+      <p class="hint">Source: <code id="config-source">loading…</code></p>
+      <table id="config-table">
+        <thead><tr><th>Key</th><th>Value</th></tr></thead>
+        <tbody id="config-body"></tbody>
+      </table>
+    </section>
+
+    <!-- ── Injected secrets viewer ────────────────────────────────── -->
+    <section class="card" id="secrets-section">
+      <h2>Injected Secrets</h2>
+      <p class="hint">
+        Read-only view of secrets injected by
+        <strong>Vault Agent</strong> (files) or the
+        <strong>Vault Secrets Operator</strong> (env vars).
+      </p>
+
+      <div id="secrets-list-wrapper">
+        <div id="secrets-list" class="secrets-list"></div>
+        <p id="secrets-empty" class="hint" style="display:none">
+          No injected secrets found.<br/>
+          Make sure Vault Agent is writing files to the configured path,
+          or that the Vault Secrets Operator has projected the expected
+          environment variables.
+        </p>
+      </div>
+
+      <!-- detail panel -->
+      <div id="secret-detail" class="secret-detail" style="display:none">
+        <div class="secret-detail-header">
+          <h3>
+            <span id="secret-source-icon"></span>
+            <code id="secret-name-label"></code>
+          </h3>
+          <button class="btn btn-secondary btn-small" onclick="closeDetail()">✕ Close</button>
+        </div>
+        <table>
+          <thead><tr><th>Field</th><th>Value</th><th></th></tr></thead>
+          <tbody id="secret-fields-body"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <!-- ── Notification toast ───────────────────────────────────────── -->
+  <div id="toast" class="toast" style="display:none"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>

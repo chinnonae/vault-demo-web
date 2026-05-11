@@ -1,0 +1,39 @@
+# vault-demo-web configuration file
+#
+# Copy this file to config/config.yaml (or any path) and edit it.
+# Set the CONFIG_FILE environment variable to tell the app where to find it.
+#
+# Environment variables always override values set in this file.
+# See .env.example for the full list of supported variables.
+#
+# NOTE: This app does NOT connect to Vault directly.
+#       Secrets must be injected by Vault Agent (file) or the
+#       Vault Secrets Operator (env vars / mounted K8s Secrets).
+
+server:
+  # Network interface to bind to (use 0.0.0.0 for containers)
+  host: 0.0.0.0
+
+  # Port the application listens on
+  port: 8080
+
+  # Enable Flask debug mode (do NOT set to true in production)
+  debug: false
+
+secrets:
+  # How secrets are delivered to this pod.
+  # Options:
+  #   file – Vault Agent renders templates into a directory (see path below)
+  #   env  – Vault Secrets Operator projects secrets as environment variables
+  #   both – read from both sources
+  source: file
+
+  # Directory where Vault Agent writes rendered secret files.
+  # Each file in this directory is treated as one secret.
+  # Ignored when source is "env".
+  path: /vault/secrets
+
+  # Environment-variable prefix used by the Vault Secrets Operator.
+  # All variables whose names start with this prefix are collected.
+  # Ignored when source is "file".
+  env_prefix: SECRET_

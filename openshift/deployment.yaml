@@ -1,0 +1,130 @@
+---
+# Deployment for vault-demo-web on OpenShift.
+#
+# Secrets are NOT fetched by this app directly.  They are delivered by:
+#   • Vault Agent sidecar  – injects a rendered-file volume into the pod
+#   • Vault Secrets Operator – creates a K8s Secret that is mounted or
+#                              projected as environment variables
+#
+# Two configuration methods are shown:
+#   Method 1 (env vars)   – Vault Secrets Operator projects a K8s Secret
+#                           as environment variables with a SECRET_ prefix.
+#   Method 2 (file)       – Vault Agent sidecar writes files to /vault/secrets.
+#
+# Uncomment the block that matches your setup.
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vault-demo-web
+  labels:
+    app: vault-demo-web
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vault-demo-web
+  template:
+    metadata:
+      labels:
+        app: vault-demo-web
+      # ── Vault Agent sidecar annotations (Method 2 – file) ──────────
+      # Uncomment this block to enable the Vault Agent injector.
+      # annotations:
+      #   vault.hashicorp.com/agent-inject: "true"
+      #   vault.hashicorp.com/role: "vault-demo-web"
+      #   vault.hashicorp.com/agent-inject-secret-db-creds: "secret/data/myapp/db"
+      #   vault.hashicorp.com/agent-inject-template-db-creds: |
+      #     {{- with secret "secret/data/myapp/db" -}}
+      #     username={{ .Data.data.username }}
+      #     password={{ .Data.data.password }}
+      #     {{- end }}
+    spec:
+      # ── Security context ──────────────────────────────────────────
+      securityContext:
+        runAsNonRoot: true
+
+      containers:
+        - name: vault-demo-web
+          image: vault-demo-web:latest   # replace with your registry image
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+
+          # ── App configuration ─────────────────────────────────────
+          # Pick ONE of the two methods below.
+
+          # ── Method 1: env vars (Vault Secrets Operator) ───────────
+          # The Vault Secrets Operator syncs a VaultStaticSecret / VaultDynamicSecret
+          # into a K8s Secret (see secret.yaml).  We project that Secret as env vars
+          # with the SECRET_ prefix so the app can read them.
+          env:
+            - name: SECRETS_SOURCE
+              value: "env"
+            - name: SECRETS_ENV_PREFIX
+              value: "SECRET_"
+            - name: SERVER_PORT
+              value: "8080"
+          envFrom:
+            - secretRef:
+                name: vault-demo-secrets   # K8s Secret created by Vault Secrets Operator
+
+          # ── Method 2: file (Vault Agent sidecar) ──────────────────
+          # When using the Vault Agent injector, the agent writes files to
+          # /vault/secrets/ automatically.  Switch SECRETS_SOURCE to "file".
+          # env:
+          #   - name: SECRETS_SOURCE
+          #     value: "file"
+          #   - name: SECRETS_PATH
+          #     value: "/vault/secrets"
+          #   - name: SERVER_PORT
+          #     value: "8080"
+
+          # ── Config file override (either method) ──────────────────
+          # Uncomment to use a ConfigMap-backed config file instead of
+          # (or to supplement) the env vars above.
+          # env:
+          #   - name: CONFIG_FILE
+          #     value: /etc/vault-demo/config.yaml
+          # volumeMounts:
+          #   - name: vault-demo-config
+          #     mountPath: /etc/vault-demo
+          #     readOnly: true
+
+          # ── Probes ────────────────────────────────────────────────
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            failureThreshold: 3
+
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            failureThreshold: 3
+
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
+
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+            readOnlyRootFilesystem: false   # gunicorn writes temp files
+
+      # ── Volumes ──────────────────────────────────────────────────
+      # volumes:
+      #   - name: vault-demo-config
+      #     configMap:
+      #       name: vault-demo-config

@@ -1,0 +1,6 @@
+{{- with secret "secret/data/myapp/config" -}}
+{
+  "api_key":    "{{ .Data.data.api_key }}",
+  "api_secret": "{{ .Data.data.api_secret }}"
+}
+{{- end }}

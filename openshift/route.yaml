@@ -1,0 +1,17 @@
+---
+# OpenShift Route – exposes vault-demo-web externally with TLS edge termination.
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: vault-demo-web
+  labels:
+    app: vault-demo-web
+spec:
+  to:
+    kind: Service
+    name: vault-demo-web
+  port:
+    targetPort: http
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
