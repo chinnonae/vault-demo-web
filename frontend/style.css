@@ -1,0 +1,326 @@
+/* ── Reset & base ─────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #f4f5f7;
+  --surface: #ffffff;
+  --primary: #1563ff;
+  --primary-dark: #0e4fd6;
+  --danger: #e03535;
+  --danger-dark: #b82a2a;
+  --secondary-btn-bg: #e8eaed;
+  --secondary-btn-fg: #333;
+  --text: #1a1a2e;
+  --muted: #6c757d;
+  --border: #dde1e7;
+  --radius: 8px;
+  --shadow: 0 2px 8px rgba(0,0,0,.08);
+  --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --mono: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+}
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+}
+
+/* ── Header ───────────────────────────────────────────────────────── */
+header {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  color: #fff;
+  padding: 1rem 2rem;
+  box-shadow: 0 2px 6px rgba(0,0,0,.3);
+}
+
+.header-inner {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.logo { width: 36px; height: 36px; }
+
+header h1 { font-size: 1.4rem; font-weight: 600; letter-spacing: .5px; }
+
+/* ── Main layout ──────────────────────────────────────────────────── */
+main {
+  max-width: 1100px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+  display: grid;
+  gap: 1.5rem;
+}
+
+/* ── Card ─────────────────────────────────────────────────────────── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  box-shadow: var(--shadow);
+}
+
+.card h2 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  padding-bottom: .5rem;
+  border-bottom: 2px solid var(--border);
+}
+
+/* ── Buttons ──────────────────────────────────────────────────────── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  padding: .5rem 1.1rem;
+  border: none;
+  border-radius: var(--radius);
+  font-size: .9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s, transform .1s;
+}
+
+.btn:active { transform: scale(.97); }
+
+.btn-primary   { background: var(--primary); color: #fff; }
+.btn-primary:hover { background: var(--primary-dark); }
+
+.btn-danger    { background: var(--danger); color: #fff; }
+.btn-danger:hover { background: var(--danger-dark); }
+
+.btn-secondary { background: var(--secondary-btn-bg); color: var(--secondary-btn-fg); }
+.btn-secondary:hover { background: #d5d9e0; }
+
+.btn-small { padding: .3rem .7rem; font-size: .8rem; }
+
+/* ── Badges ───────────────────────────────────────────────────────── */
+.badge {
+  display: inline-block;
+  padding: .2rem .65rem;
+  border-radius: 999px;
+  font-size: .78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+}
+
+.badge-ok      { background: #d4edda; color: #155724; }
+.badge-error   { background: #f8d7da; color: #721c24; }
+.badge-warn    { background: #fff3cd; color: #856404; }
+.badge-unknown { background: #e2e3e5; color: #6c757d; }
+
+/* ── Status grid ──────────────────────────────────────────────────── */
+.status-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.status-item {
+  display: flex;
+  flex-direction: column;
+  gap: .25rem;
+  min-width: 130px;
+}
+
+.label { font-size: .75rem; font-weight: 600; color: var(--muted); text-transform: uppercase; }
+
+/* ── Tables ───────────────────────────────────────────────────────── */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: .9rem;
+}
+
+th, td {
+  padding: .55rem .75rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+
+th { background: #f8f9fa; font-weight: 700; color: var(--muted); font-size: .78rem; text-transform: uppercase; }
+
+tr:last-child td { border-bottom: none; }
+
+tr:hover td { background: #f8f9fa; }
+
+/* ── Hints ────────────────────────────────────────────────────────── */
+.hint { font-size: .85rem; color: var(--muted); margin-bottom: .75rem; }
+
+code {
+  font-family: var(--mono);
+  background: #f0f2f5;
+  padding: .1em .4em;
+  border-radius: 4px;
+  font-size: .88em;
+}
+
+/* ── Path / breadcrumb ────────────────────────────────────────────── */
+.path-bar {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  background: #f8f9fa;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: .4rem .75rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.breadcrumb { font-family: var(--mono); font-size: .9rem; }
+.breadcrumb a { color: var(--primary); text-decoration: none; }
+.breadcrumb a:hover { text-decoration: underline; }
+.breadcrumb .sep { color: var(--muted); margin: 0 .25rem; }
+
+/* ── Key list ─────────────────────────────────────────────────────── */
+.key-list {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: .5rem;
+  margin-bottom: 1rem;
+}
+
+.key-list li button {
+  width: 100%;
+  text-align: left;
+  padding: .45rem .75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: #f8f9fa;
+  cursor: pointer;
+  font-size: .9rem;
+  font-family: var(--mono);
+  transition: background .15s, border-color .15s;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.key-list li button:hover { background: #e8eaed; border-color: var(--primary); }
+.key-list li.is-dir button::before { content: "📁 "; }
+.key-list li.is-secret button::before { content: "🔑 "; }
+
+/* ── Secret detail ────────────────────────────────────────────────── */
+.secret-detail {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem;
+  margin-bottom: 1rem;
+  background: #fafbfc;
+}
+
+.secret-detail h3 { margin-bottom: .75rem; font-size: 1rem; }
+
+.secret-detail table { margin-bottom: .75rem; }
+
+/* ── Write box ────────────────────────────────────────────────────── */
+.write-box {
+  border-top: 1px solid var(--border);
+  padding-top: 1rem;
+  margin-top: 1rem;
+}
+
+.write-box h3 { font-size: 1rem; margin-bottom: .5rem; }
+
+.form-row {
+  display: flex;
+  gap: .5rem;
+  flex-wrap: wrap;
+}
+
+.form-row input {
+  flex: 1;
+  min-width: 200px;
+  padding: .45rem .75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: .9rem;
+  font-family: var(--mono);
+}
+
+.form-row input:focus { outline: 2px solid var(--primary); border-color: transparent; }
+
+/* ── Modal ────────────────────────────────────────────────────────── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.modal {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 2rem;
+  min-width: 380px;
+  max-width: 580px;
+  width: 90%;
+  box-shadow: 0 8px 32px rgba(0,0,0,.2);
+}
+
+.modal h3 { margin-bottom: .5rem; }
+.modal p  { margin-bottom: 1rem; }
+
+.kv-row {
+  display: flex;
+  gap: .4rem;
+  margin-bottom: .4rem;
+}
+
+.kv-row input {
+  flex: 1;
+  padding: .4rem .6rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: .88rem;
+  font-family: var(--mono);
+}
+
+.modal-actions {
+  display: flex;
+  gap: .5rem;
+  margin-top: 1rem;
+  justify-content: flex-end;
+}
+
+/* ── Toast ────────────────────────────────────────────────────────── */
+.toast {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  background: #333;
+  color: #fff;
+  padding: .7rem 1.2rem;
+  border-radius: var(--radius);
+  font-size: .9rem;
+  box-shadow: 0 4px 16px rgba(0,0,0,.25);
+  z-index: 200;
+  animation: slidein .2s ease;
+}
+
+.toast.toast-ok    { background: #155724; }
+.toast.toast-error { background: #721c24; }
+
+@keyframes slidein {
+  from { transform: translateY(20px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+/* ── Responsive ───────────────────────────────────────────────────── */
+@media (max-width: 600px) {
+  header { padding: .75rem 1rem; }
+  main   { padding: 0 .5rem; margin: 1rem auto; }
+  .modal { min-width: unset; }
+}

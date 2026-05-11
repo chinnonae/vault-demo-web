@@ -1,0 +1,100 @@
+---
+# Deployment for vault-demo-web on OpenShift.
+# The app runs as a non-root user (UID 1001) which is compatible with
+# OpenShift's default restricted SCC.
+#
+# Configuration can be supplied in two ways:
+#   1. Environment variables  – edit the env: section below.
+#   2. Config file            – uncomment the ConfigMap volume mount.
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vault-demo-web
+  labels:
+    app: vault-demo-web
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vault-demo-web
+  template:
+    metadata:
+      labels:
+        app: vault-demo-web
+    spec:
+      # ── Security context ──────────────────────────────────────────
+      securityContext:
+        runAsNonRoot: true
+        # OpenShift assigns an arbitrary UID; omit runAsUser to allow that.
+        # runAsUser: 1001
+
+      containers:
+        - name: vault-demo-web
+          image: vault-demo-web:latest   # replace with your registry image
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+
+          # ── Configuration method 1: environment variables ─────────
+          env:
+            - name: VAULT_ADDR
+              value: "http://vault:8200"       # or use a Service DNS name
+            - name: VAULT_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: vault-demo-secret      # see secret.yaml
+                  key: vault-token
+            - name: VAULT_MOUNT
+              value: "secret"
+            - name: SERVER_PORT
+              value: "8080"
+
+          # ── Configuration method 2: config file ───────────────────
+          # Uncomment the block below to mount a config file from a
+          # ConfigMap instead of (or in addition to) env vars.
+          # env:
+          #   - name: CONFIG_FILE
+          #     value: /etc/vault-demo/config.yaml
+          # volumeMounts:
+          #   - name: vault-demo-config
+          #     mountPath: /etc/vault-demo
+          #     readOnly: true
+
+          # ── Probes ────────────────────────────────────────────────
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            failureThreshold: 3
+
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            failureThreshold: 3
+
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
+
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+            readOnlyRootFilesystem: false   # gunicorn writes temp files
+
+      # ── Volumes (for config file approach) ──────────────────────
+      # volumes:
+      #   - name: vault-demo-config
+      #     configMap:
+      #       name: vault-demo-config

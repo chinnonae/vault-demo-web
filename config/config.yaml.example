@@ -1,0 +1,33 @@
+# vault-demo-web configuration file
+#
+# Copy this file to config/config.yaml (or any path) and edit it.
+# You can tell the app where to find it by setting the CONFIG_FILE
+# environment variable.
+#
+# Environment variables always override values set in this file.
+# See .env.example for the full list of supported variables.
+
+vault:
+  # Address of the Vault server
+  addr: http://127.0.0.1:8200
+
+  # Authentication token
+  # In production, prefer environment injection (VAULT_TOKEN) or
+  # Vault Agent / Kubernetes auth instead of storing the token here.
+  token: root
+
+  # Vault namespace (HCP Vault / Vault Enterprise only – leave blank for OSS)
+  namespace: ""
+
+  # KV secrets engine mount path
+  mount: secret
+
+server:
+  # Network interface to bind to (use 0.0.0.0 for containers)
+  host: 0.0.0.0
+
+  # Port the application listens on
+  port: 8080
+
+  # Enable Flask debug mode (do NOT set to true in production)
+  debug: false
