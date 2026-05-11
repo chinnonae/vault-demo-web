@@ -68,15 +68,15 @@ class SecretsReader:
     # ------------------------------------------------------------------
 
     def _read_from_files(self) -> list[InjectedSecret]:
-        path = self._cfg.secrets_path
+        inject_dir = self._cfg.secrets_path
         secrets: list[InjectedSecret] = []
 
-        if not os.path.isdir(path):
-            logger.warning("secrets.path '%s' does not exist or is not a directory.", path)
+        if not os.path.isdir(inject_dir):
+            logger.warning("Injection directory '%s' does not exist or is not a directory.", inject_dir)
             return secrets
 
-        for fname in sorted(os.listdir(path)):
-            fpath = os.path.join(path, fname)
+        for fname in sorted(os.listdir(inject_dir)):
+            fpath = os.path.join(inject_dir, fname)
             if not os.path.isfile(fpath):
                 continue
             try:
@@ -85,7 +85,7 @@ class SecretsReader:
                 fields = _parse_secret_file(fname, content)
                 secrets.append(InjectedSecret(name=fname, source="file", fields=fields))
             except OSError as exc:
-                logger.warning("Could not read secret file '%s': %s", fpath, exc)
+                logger.warning("Could not read injected file '%s': %s", fname, exc)
 
         return secrets
 

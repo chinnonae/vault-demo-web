@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+*.egg
+
+# Env / secrets (never commit real values)
+.env
+config/config.yaml
+vault-agent/agent.hcl
+vault-agent/*.tpl
+vault-agent/.vault-token
+
+# OS
+.DS_Store
+Thumbs.db

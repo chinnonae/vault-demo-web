@@ -135,6 +135,6 @@ def internal_error(e):
 
 if __name__ == "__main__":
     logger.info("Configuration source: %s", cfg.source)
-    logger.info("Secrets source: %s", cfg.secrets_source)
+    logger.info("Injection source: %s", cfg.secrets_source)
     logger.info("Starting server on %s:%d (debug=%s)", cfg.server_host, cfg.server_port, cfg.server_debug)
     app.run(host=cfg.server_host, port=cfg.server_port, debug=cfg.server_debug)
