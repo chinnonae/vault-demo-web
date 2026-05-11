@@ -1,20 +1,26 @@
 """
 Configuration loader for vault-demo-web.
 
+This app does NOT talk to Vault directly.  Secrets are delivered by
+Vault Agent (rendered template files) or the Vault Secrets Operator
+(environment variables / mounted Kubernetes Secret files).
+
 Priority (highest to lowest):
   1. Environment variables
   2. Config file (path from CONFIG_FILE env var, or searched in standard locations)
   3. Built-in defaults
 
 Supported environment variables:
-  CONFIG_FILE       – explicit path to a YAML config file
-  VAULT_ADDR        – Vault server address
-  VAULT_TOKEN       – Vault token
-  VAULT_NAMESPACE   – Vault namespace (Enterprise / HCP)
-  VAULT_MOUNT       – KV secrets engine mount path  (default: secret)
-  SERVER_HOST       – Flask bind host                (default: 0.0.0.0)
-  SERVER_PORT       – Flask bind port                (default: 8080)
-  SERVER_DEBUG      – Enable Flask debug mode        (default: false)
+  CONFIG_FILE          – explicit path to a YAML config file
+  SERVER_HOST          – Flask bind host                    (default: 0.0.0.0)
+  SERVER_PORT          – Flask bind port                    (default: 8080)
+  SERVER_DEBUG         – Enable Flask debug mode            (default: false)
+  SECRETS_SOURCE       – Where injected secrets come from:
+                         "file" | "env" | "both"            (default: file)
+  SECRETS_PATH         – Directory of Vault-Agent-rendered files
+                                                            (default: /vault/secrets)
+  SECRETS_ENV_PREFIX   – Env-var prefix used by the Secrets Operator
+                                                            (default: SECRET_)
 """
 
 import os
@@ -36,16 +42,15 @@ _DEFAULT_CONFIG_PATHS = [
 ]
 
 _DEFAULTS: dict[str, Any] = {
-    "vault": {
-        "addr": "http://127.0.0.1:8200",
-        "token": "",
-        "namespace": "",
-        "mount": "secret",
-    },
     "server": {
         "host": "0.0.0.0",
         "port": 8080,
         "debug": False,
+    },
+    "secrets": {
+        "source": "file",          # "file" | "env" | "both"
+        "path": "/vault/secrets",  # Vault Agent rendered-template directory
+        "env_prefix": "SECRET_",   # prefix used by Vault Secrets Operator
     },
 }
 
@@ -88,23 +93,15 @@ def _find_config_file() -> str | None:
 
 def _env_overrides() -> dict:
     """Build a partial config dict from environment variables."""
-    overrides: dict[str, Any] = {"vault": {}, "server": {}}
-
-    for env_key, cfg_path in [
-        ("VAULT_ADDR", ("vault", "addr")),
-        ("VAULT_TOKEN", ("vault", "token")),
-        ("VAULT_NAMESPACE", ("vault", "namespace")),
-        ("VAULT_MOUNT", ("vault", "mount")),
-    ]:
-        val = os.environ.get(env_key)
-        if val is not None:
-            section, field = cfg_path
-            overrides[section][field] = val
+    overrides: dict[str, Any] = {"server": {}, "secrets": {}}
 
     for env_key, cfg_path, cast in [
-        ("SERVER_HOST", ("server", "host"), str),
-        ("SERVER_PORT", ("server", "port"), int),
-        ("SERVER_DEBUG", ("server", "debug"), lambda v: v.lower() in ("1", "true", "yes")),
+        ("SERVER_HOST",        ("server", "host"),         str),
+        ("SERVER_PORT",        ("server", "port"),         int),
+        ("SERVER_DEBUG",       ("server", "debug"),        lambda v: v.lower() in ("1", "true", "yes")),
+        ("SECRETS_SOURCE",     ("secrets", "source"),      str),
+        ("SECRETS_PATH",       ("secrets", "path"),        str),
+        ("SECRETS_ENV_PREFIX", ("secrets", "env_prefix"),  str),
     ]:
         val = os.environ.get(env_key)
         if val is not None:
@@ -122,31 +119,29 @@ class Config:
         self._raw = raw
         self.source = source  # human-readable description of where config came from
 
-        vault = raw.get("vault", {})
-        self.vault_addr: str = vault.get("addr", "")
-        self.vault_token: str = vault.get("token", "")
-        self.vault_namespace: str = vault.get("namespace", "")
-        self.vault_mount: str = vault.get("mount", "secret")
-
         server = raw.get("server", {})
         self.server_host: str = server.get("host", "0.0.0.0")
         self.server_port: int = int(server.get("port", 8080))
         self.server_debug: bool = bool(server.get("debug", False))
 
+        secrets = raw.get("secrets", {})
+        self.secrets_source: str = secrets.get("source", "file")
+        self.secrets_path: str = secrets.get("path", "/vault/secrets")
+        self.secrets_env_prefix: str = secrets.get("env_prefix", "SECRET_")
+
     def to_dict(self) -> dict:
-        """Return a serialisable representation (token redacted)."""
+        """Return a serialisable representation."""
         return {
             "source": self.source,
-            "vault": {
-                "addr": self.vault_addr,
-                "token": "***" if self.vault_token else "(not set)",
-                "namespace": self.vault_namespace or "(default)",
-                "mount": self.vault_mount,
-            },
             "server": {
                 "host": self.server_host,
                 "port": self.server_port,
                 "debug": self.server_debug,
+            },
+            "secrets": {
+                "source": self.secrets_source,
+                "path": self.secrets_path,
+                "env_prefix": self.secrets_env_prefix,
             },
         }
 

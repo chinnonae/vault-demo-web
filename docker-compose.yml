@@ -19,6 +19,26 @@ services:
       retries: 5
       start_period: 5s
 
+  # ── Vault Agent – writes secrets to a shared volume ────────────────
+  # The agent authenticates to Vault, fetches secrets, renders them
+  # to /vault/secrets/, and keeps them up to date.
+  vault-agent:
+    image: hashicorp/vault:1.17
+    container_name: vault-agent
+    depends_on:
+      vault:
+        condition: service_healthy
+    volumes:
+      - vault-secrets:/vault/secrets
+      - ./vault-agent:/vault/config:ro     # mount agent config & templates
+    environment:
+      VAULT_ADDR: http://vault:8200
+    entrypoint:
+      - vault
+      - agent
+      - -config=/vault/config/agent.hcl
+    # See vault-agent/agent.hcl.example for a starter config
+
   # ── vault-demo-web application ──────────────────────────────────────
   app:
     build:
@@ -27,18 +47,22 @@ services:
     container_name: vault-demo-web
     ports:
       - "8080:8080"
+    volumes:
+      # Secrets written by Vault Agent are available here (read-only)
+      - vault-secrets:/vault/secrets:ro
     environment:
-      # Override individual settings via env vars …
-      VAULT_ADDR: http://vault:8200
-      VAULT_TOKEN: root
-      VAULT_MOUNT: secret
+      # Configuration method 1: environment variables
+      SECRETS_SOURCE: file
+      SECRETS_PATH: /vault/secrets
       SERVER_HOST: 0.0.0.0
       SERVER_PORT: "8080"
-      # … OR mount a config file and point CONFIG_FILE at it:
+      # Configuration method 2: mount a config file
       # CONFIG_FILE: /etc/vault-demo/config.yaml
     # volumes:
     #   - ./config/config.yaml:/etc/vault-demo/config.yaml:ro
     depends_on:
-      vault:
-        condition: service_healthy
+      - vault-agent
     restart: unless-stopped
+
+volumes:
+  vault-secrets:

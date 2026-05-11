@@ -1,0 +1,26 @@
+---
+# ConfigMap – app configuration file (config.yaml approach).
+#
+# Mount this ConfigMap as a volume and set CONFIG_FILE=/etc/vault-demo/config.yaml
+# in the Deployment to use file-based configuration instead of env vars.
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vault-demo-config
+  labels:
+    app: vault-demo-web
+data:
+  config.yaml: |
+    server:
+      host: 0.0.0.0
+      port: 8080
+      debug: false
+
+    secrets:
+      # file  – Vault Agent sidecar writes to /vault/secrets
+      # env   – Vault Secrets Operator projects as env vars
+      # both  – read from both
+      source: file
+      path: /vault/secrets
+      env_prefix: SECRET_

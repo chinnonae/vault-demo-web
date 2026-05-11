@@ -1,14 +1,17 @@
 """
 vault-demo-web – Flask application entry point.
 
+This application does NOT talk to Vault directly.
+Secrets are injected by:
+  • Vault Agent       – rendered as files into a directory (default: /vault/secrets)
+  • Vault Secrets Operator – projected as environment variables or mounted K8s Secrets
+
 REST API
 --------
-GET  /api/health           Vault + app health status
-GET  /api/config           Active configuration (token redacted)
-GET  /api/secrets          List keys at the root of the KV mount
-GET  /api/secrets/<path>   List keys (if path ends with /) or read secret data
-POST /api/secrets/<path>   Create / update a secret  (JSON body: {"key": "value", ...})
-DELETE /api/secrets/<path> Delete a secret
+GET  /api/health          App health status
+GET  /api/config          Active configuration
+GET  /api/secrets         List all injected secrets (names + source)
+GET  /api/secrets/<name>  Read fields of a specific injected secret
 
 All JSON responses have the shape:
   { "ok": true,  "data": <payload> }
@@ -18,11 +21,11 @@ All JSON responses have the shape:
 import logging
 import os
 
-from flask import Flask, jsonify, request, send_from_directory
+from flask import Flask, jsonify, send_from_directory
 from flask_cors import CORS
 
 from config import load_config
-from vault_client import VaultClient, SecretNotFoundError, VaultOperationError
+from secrets_reader import SecretsReader
 
 # ---------------------------------------------------------------------------
 # Logging
@@ -37,7 +40,7 @@ logger = logging.getLogger(__name__)
 # Bootstrap
 # ---------------------------------------------------------------------------
 cfg = load_config()
-vault = VaultClient(cfg)
+reader = SecretsReader(cfg)
 
 # ---------------------------------------------------------------------------
 # Flask app
@@ -77,13 +80,7 @@ def serve_frontend(filename="index.html"):
 
 @app.get("/api/health")
 def api_health():
-    vault_health = vault.health()
-    authenticated = vault.is_authenticated() if vault_health.get("reachable") else False
-    return _ok({
-        "status": "ok",
-        "vault": vault_health,
-        "authenticated": authenticated,
-    })
+    return _ok({"status": "ok"})
 
 
 @app.get("/api/config")
@@ -92,58 +89,24 @@ def api_config():
 
 
 # ---------------------------------------------------------------------------
-# API – secrets
+# API – injected secrets (read-only)
 # ---------------------------------------------------------------------------
 
 @app.get("/api/secrets")
-def api_list_root():
-    try:
-        keys = vault.list_secrets("")
-        return _ok({"path": "/", "keys": keys})
-    except VaultOperationError as exc:
-        return _err(str(exc), 502)
+def api_list_secrets():
+    secrets = reader.list_secrets()
+    return _ok([
+        {"name": s.name, "source": s.source, "field_count": len(s.fields)}
+        for s in secrets
+    ])
 
 
-@app.get("/api/secrets/<path:secret_path>")
-def api_secrets_get(secret_path: str):
-    """
-    If the path ends with '/' (or is a prefix), list keys.
-    Otherwise read the secret data.
-    """
-    try:
-        if secret_path.endswith("/"):
-            keys = vault.list_secrets(secret_path)
-            return _ok({"path": secret_path, "keys": keys})
-        else:
-            data = vault.read_secret(secret_path)
-            return _ok({"path": secret_path, "data": data})
-    except SecretNotFoundError as exc:
-        return _err(str(exc), 404)
-    except VaultOperationError as exc:
-        return _err(str(exc), 502)
-
-
-@app.post("/api/secrets/<path:secret_path>")
-def api_secrets_write(secret_path: str):
-    payload = request.get_json(silent=True)
-    if not isinstance(payload, dict):
-        return _err("Request body must be a JSON object.")
-    try:
-        vault.write_secret(secret_path, payload)
-        return _ok({"path": secret_path, "message": "Secret written successfully."})
-    except VaultOperationError as exc:
-        return _err(str(exc), 502)
-
-
-@app.delete("/api/secrets/<path:secret_path>")
-def api_secrets_delete(secret_path: str):
-    try:
-        vault.delete_secret(secret_path)
-        return _ok({"path": secret_path, "message": "Secret deleted successfully."})
-    except SecretNotFoundError as exc:
-        return _err(str(exc), 404)
-    except VaultOperationError as exc:
-        return _err(str(exc), 502)
+@app.get("/api/secrets/<path:name>")
+def api_get_secret(name: str):
+    secret = reader.get_secret(name)
+    if secret is None:
+        return _err(f"Secret '{name}' not found.", 404)
+    return _ok({"name": secret.name, "source": secret.source, "fields": secret.fields})
 
 
 # ---------------------------------------------------------------------------
@@ -172,6 +135,6 @@ def internal_error(e):
 
 if __name__ == "__main__":
     logger.info("Configuration source: %s", cfg.source)
-    logger.info("Vault address: %s", cfg.vault_addr)
+    logger.info("Secrets source: %s", cfg.secrets_source)
     logger.info("Starting server on %s:%d (debug=%s)", cfg.server_host, cfg.server_port, cfg.server_debug)
     app.run(host=cfg.server_host, port=cfg.server_port, debug=cfg.server_debug)

@@ -1,5 +1,4 @@
 Flask==3.1.0
 flask-cors==5.0.1
-hvac==2.3.0
 PyYAML==6.0.2
 gunicorn==23.0.0

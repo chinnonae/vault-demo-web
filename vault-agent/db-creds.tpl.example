@@ -1,0 +1,5 @@
+{{- with secret "secret/data/myapp/db" -}}
+username={{ .Data.data.username }}
+password={{ .Data.data.password }}
+host={{ .Data.data.host }}
+{{- end }}
