@@ -115,7 +115,7 @@ Auto-searched locations (first match wins):
 
 ```powershell
 # 1. Clone the repo
-git clone https://github.com/chinnonae/vault-demo-web.git
+git clone https://github.com/<your-org>/vault-demo-web.git
 cd vault-demo-web
 
 # 2. Install dependencies

@@ -72,7 +72,7 @@ class SecretsReader:
         secrets: list[InjectedSecret] = []
 
         if not os.path.isdir(inject_dir):
-            logger.warning("Injection directory '%s' does not exist or is not a directory.", inject_dir)
+            logger.warning("Injection directory does not exist or is not a directory.")
             return secrets
 
         for fname in sorted(os.listdir(inject_dir)):
